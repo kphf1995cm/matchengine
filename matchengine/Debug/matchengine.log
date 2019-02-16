@@ -1,0 +1,14 @@
+﻿生成启动时间为 2019/2/17 0:01:04。
+     1>项目“D:\code\VS2015\matchengine\matchengine\matchengine.vcxproj”在节点 2 上(Build 个目标)。
+     1>ClCompile:
+         C:\software\vs2015\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt engine.cpp
+         engine.cpp
+       Link:
+         C:\software\vs2015\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\code\VS2015\matchengine\Debug\matchengine.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"D:\code\VS2015\matchengine\Debug\matchengine.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\code\VS2015\matchengine\Debug\matchengine.lib" /MACHINE:X86 Debug\engine.obj
+         Debug\main.obj
+         matchengine.vcxproj -> D:\code\VS2015\matchengine\Debug\matchengine.exe
+     1>已完成生成项目“D:\code\VS2015\matchengine\matchengine\matchengine.vcxproj”(Build 个目标)的操作。
+
+已成功生成。
+
+已用时间 00:00:00.95
