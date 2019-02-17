@@ -21,9 +21,9 @@ int MatchEngine::LimitOrder(int direction, long price, long vol) {
 		for (std::map<long, std::vector<OrderItem>>::iterator iter = price_orderitems.begin(); iter != price_orderitems.end()&&success==false; ++iter) {
 			if (iter->first > price)
 				break;
-			for (std::vector<OrderItem>::iterator oiter = price_orderitems[iter->first].begin(); oiter != price_orderitems[iter->first].end();++oiter) {
+			for (std::vector<OrderItem>::iterator oiter = price_orderitems[iter->first].begin(); oiter != price_orderitems[iter->first].end();) {
 				if (oiter->direction == SELL) {
-					if (oiter->vol>vol) {
+					if (oiter->vol > vol) {
 						oiter->vol = oiter->vol - vol;
 						MATCH(price, vol);
 						success = true;
@@ -39,10 +39,12 @@ int MatchEngine::LimitOrder(int direction, long price, long vol) {
 						else {
 							MATCH(price, oiter->vol);
 							vol = vol - oiter->vol;
-							price_orderitems[iter->first].erase(oiter);
+							oiter=price_orderitems[iter->first].erase(oiter);
 						}
 					}
 				}
+				else
+					++oiter;
 			}
 		}
 		if (success == false){ // do not buy successfully 
@@ -58,34 +60,41 @@ int MatchEngine::LimitOrder(int direction, long price, long vol) {
 	}
 	else { //SELL
 		// check buy_orderids (从小到大)
-		for (std::vector<int>::iterator iter = buy_orderids.begin(); iter != buy_orderids.end()&&success==false; ++iter) {
-			for (std::vector<OrderItem>::iterator oiter = price_orderitems[orderid_price[*iter]].begin(); oiter != price_orderitems[orderid_price[*iter]].end(); ++oiter) {
+		bool iter_add = false;
+		for (std::vector<int>::iterator iter = buy_orderids.begin(); iter != buy_orderids.end()&&success==false; ) {
+			iter_add = false;
+			for (std::vector<OrderItem>::iterator oiter = price_orderitems[orderid_price[*iter]].begin(); oiter != price_orderitems[orderid_price[*iter]].end();) {
 				if (oiter->orderid == *iter) { //找到对应orderid
-					if (oiter->ordertype == MARKET||(oiter->ordertype==LIMIT&&orderid_price[*iter]>=price)) {
+					if (oiter->ordertype == MARKET || (oiter->ordertype == LIMIT&&orderid_price[*iter] >= price)) {
 						if (oiter->vol > vol) {
 							MATCH(price, vol);
 							oiter->vol = oiter->vol - vol;
 							success = true;
-							break;
 						}
 						else {
 							if (oiter->vol == vol) {
 								MATCH(price, vol);
 								success = true;
-								price_orderitems[orderid_price[*iter]].erase(oiter);
-								buy_orderids.erase(iter);
-								break;
+								oiter=price_orderitems[orderid_price[*iter]].erase(oiter);
+								iter = buy_orderids.erase(iter);
+								iter_add = true;
 							}
 							else {
 								MATCH(price, oiter->vol);
 								vol = vol - oiter->vol;
-								price_orderitems[orderid_price[*iter]].erase(oiter);
-								buy_orderids.erase(iter); //删除迭代器后，iter失效？
+								oiter=price_orderitems[orderid_price[*iter]].erase(oiter);
+								iter = buy_orderids.erase(iter);
+								iter_add = true;
 							}
 						}
 					}
+					break;
 				}
+				else
+					++oiter;
 			}
+			if (iter_add == false)
+				++iter;
 		}
 		if (success == false) {  // do not sell successfully 
 			OrderItem order_item;
@@ -121,7 +130,7 @@ int MatchEngine::MarketOrder(int direction, long vol) {
 		price_level = price_orderitems.begin()->first;
 	if (direction == BUY) {
 		for (std::map<long, std::vector<OrderItem>>::iterator iter = price_orderitems.begin(); iter != price_orderitems.end() && success == false; ++iter) {
-			for (std::vector<OrderItem>::iterator oiter = price_orderitems[iter->first].begin(); oiter != price_orderitems[iter->first].end(); ++oiter) {
+			for (std::vector<OrderItem>::iterator oiter = price_orderitems[iter->first].begin(); oiter != price_orderitems[iter->first].end();) {
 				if (oiter->direction == SELL) {
 					if (oiter->vol > vol) {
 						oiter->vol = oiter->vol - vol;
@@ -133,17 +142,19 @@ int MatchEngine::MarketOrder(int direction, long vol) {
 						if (oiter->vol == vol) {
 							MATCH(iter->first, vol);
 							success = true;
-							price_orderitems[iter->first].erase(oiter);
+							oiter=price_orderitems[iter->first].erase(oiter);
 							break;
 						}
-						else{
+						else {
 							MATCH(iter->first, oiter->vol);
 							price_level = iter->first;
 							vol = vol - oiter->vol;
-							price_orderitems[iter->first].erase(oiter);// oiter迭代器失效？
+							oiter=price_orderitems[iter->first].erase(oiter);
 						}
 					}
 				}
+				else
+					++oiter;
 			}
 		}
 		if (success == false) {
@@ -167,11 +178,57 @@ int MatchEngine::MarketOrder(int direction, long vol) {
 void MatchEngine::CancelOrder(int orderid) {
 	// this is where you should handle the order cancelling request
 	long price = orderid_price[orderid];
-	for (std::vector<OrderItem>::iterator oiter = price_orderitems[price].begin(); oiter != price_orderitems[price].end(); ++oiter) {
+	for (std::vector<OrderItem>::iterator oiter = price_orderitems[price].begin(); oiter != price_orderitems[price].end();) {
 		if (oiter->orderid == orderid)
 		{
-			price_orderitems[price].erase(oiter);
+			oiter = price_orderitems[price].erase(oiter);
 			break;
 		}
+		else
+			++oiter;
 	}
+	for (std::vector<int>::iterator iter = buy_orderids.begin(); iter != buy_orderids.end();) {
+		if (*iter == orderid){
+			iter=buy_orderids.erase(iter);
+			break;
+		}
+		else {
+			++iter;
+		}
+	}
+}
+
+void MatchEngine::PrintOrderItems() {
+	std::cout << "price_orderitems: ordertype direction vol orderid" << std::endl;
+	for (std::map<long, std::vector<OrderItem>>::iterator iter = price_orderitems.begin(); iter != price_orderitems.end(); ++iter)
+	{
+		std::cout << iter->first << ":";
+		for (std::vector<OrderItem>::iterator oiter = price_orderitems[iter->first].begin(); oiter != price_orderitems[iter->first].end(); ++oiter)
+		{
+			if (oiter->ordertype == LIMIT)
+				std::cout << "LIMIT" << " ";
+			else
+				std::cout << "MARKET" << " ";
+			if (oiter->direction == BUY)
+				std::cout << "BUY" << " ";
+			else
+				std::cout << "SELL" << " ";
+			std::cout << oiter->vol << " " << oiter->orderid << ";";
+		}
+		std::cout << std::endl;
+	}
+}
+void MatchEngine::PrintOrderidPrice() {
+	std::cout << "orderid" << " " << "price" << std::endl;
+	for (std::map<int, long>::iterator iter = orderid_price.begin(); iter != orderid_price.end(); ++iter) {
+		std::cout << iter->first << " " << iter->second << std::endl;
+	}
+}
+void MatchEngine::PrintBuyOrderids() {
+	std::cout << "buy_orderids:" << std::endl;
+	for (std::vector<int>::iterator iter = buy_orderids.begin(); iter != buy_orderids.end(); ++iter)
+	{
+		std::cout << *iter << " ";
+	}
+	std::cout << std::endl;
 }

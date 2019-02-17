@@ -41,27 +41,10 @@ static int num_test = 0;
         std::cout<<"FAIL: TEST " << ++num_test<<" MISMATCH"<<std::endl;\
 }
 
-void test_vector()
-{
-	std::vector<int> vec;
-	vec.push_back(2);
-	vec.push_back(3);
-	vec.push_back(1);
-	vec.erase(vec.begin());
-	for (std::vector<int>::iterator iter = vec.begin(); iter != vec.end(); ++iter)
-	{
-		if (*iter == 2)
-			vec.erase(iter);
-		else
-			std::cout << *iter << " ";
-	}
-}
-
 //*********************************************************************************
 
 int main(int argc, char** argv)
 {
-	test_vector();
 	std::cout << "************ MATCH ENGINE *************" << std::endl;
 	TEST(SELL, 100, 100, 0, 0);
 	TEST(SELL, 101, 10, 0, 0);

@@ -56,6 +56,10 @@ public:
 	// return: orderid
 	int MarketOrder(int direction, long vol);
 
+	void PrintOrderItems();
+	void PrintOrderidPrice();
+	void PrintBuyOrderids();
+
 };
 
 
